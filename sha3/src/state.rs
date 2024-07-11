@@ -2,6 +2,13 @@ use core::convert::TryInto;
 
 const PLEN: usize = 25;
 
+#[cfg(all(
+    target_os = "zkvm",
+    target_vendor = "succinct",
+    target_arch = "riscv32"
+))]
+use crate::succinct;
+
 #[derive(Clone, Default)]
 pub(crate) struct Sha3State {
     pub state: [u64; PLEN],
@@ -30,7 +37,7 @@ impl Sha3State {
             }
         }
 
-        keccak::f1600(&mut self.state);
+        self.apply_f();
     }
 
     #[inline(always)]
@@ -54,6 +61,22 @@ impl Sha3State {
 
     #[inline(always)]
     pub(crate) fn apply_f(&mut self) {
-        keccak::f1600(&mut self.state);
+        #[cfg(all(
+            target_os = "zkvm",
+            target_vendor = "succinct",
+            target_arch = "riscv32"
+        ))]
+        {
+            succinct::keccak_permute(&mut self.state);
+        }
+
+        #[cfg(not(all(
+            target_os = "zkvm",
+            target_vendor = "succinct",
+            target_arch = "riscv32"
+        )))]
+        {
+            keccak::f1600(&mut self.state);
+        }
     }
 }

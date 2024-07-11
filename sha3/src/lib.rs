@@ -80,6 +80,13 @@ mod macros;
 mod reader;
 mod state;
 
+#[cfg(all(
+    target_os = "zkvm",
+    target_vendor = "succinct",
+    target_arch = "riscv32"
+))]
+pub mod succinct;
+
 pub use crate::reader::Sha3XofReader;
 use crate::state::Sha3State;
 
