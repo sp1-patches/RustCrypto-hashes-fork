@@ -5,6 +5,13 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 const PLEN: usize = 25;
 const DEFAULT_ROUND_COUNT: usize = 24;
 
+#[cfg(all(
+    target_os = "zkvm",
+    target_vendor = "succinct",
+    target_arch = "riscv32"
+))]
+use crate::succinct;
+
 #[derive(Clone)]
 pub(crate) struct Sha3State {
     pub state: [u64; PLEN],
@@ -46,7 +53,7 @@ impl Sha3State {
             *s ^= u64::from_le_bytes(b.try_into().unwrap());
         }
 
-        keccak::p1600(&mut self.state, self.round_count);
+        self.permute();
     }
 
     #[inline(always)]
@@ -58,6 +65,22 @@ impl Sha3State {
 
     #[inline(always)]
     pub(crate) fn permute(&mut self) {
-        keccak::p1600(&mut self.state, self.round_count);
+        #[cfg(all(
+            target_os = "zkvm",
+            target_vendor = "succinct",
+            target_arch = "riscv32"
+        ))]
+        {
+            succinct::keccak_permute(&mut self.state);
+        }
+
+        #[cfg(not(all(
+            target_os = "zkvm",
+            target_vendor = "succinct",
+            target_arch = "riscv32"
+        )))]
+        {
+            keccak::p1600(&mut self.state, self.round_count);
+        }
     }
 }
