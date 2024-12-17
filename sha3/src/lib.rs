@@ -87,6 +87,13 @@ use digest::{
 mod macros;
 mod state;
 
+#[cfg(all(
+    target_os = "zkvm",
+    target_vendor = "succinct",
+    target_arch = "riscv32"
+))]
+pub mod succinct;
+
 use crate::state::Sha3State;
 
 // Paddings
